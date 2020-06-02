@@ -68,7 +68,7 @@ export default {
       // })
       this.$refs.loginFormRef.validate(async valid => {
         if (!valid) return this.$message.error('表单验证失败!')
-        const response = await this.$axios.post('login', this.loginForm)
+        const response = await this.$axios.post('/api2/login', this.loginForm)
         console.log(response)
         if (response.data.meta.status !== 200) return this.$message.error('登录失败!')
         this.$message.success('登陆成功!')

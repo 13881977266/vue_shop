@@ -29,12 +29,19 @@ module.exports = {
       '/api2': {
         // target: 'http://127.0.0.1:8088',
         target: 'http://127.0.0.1:8888',
-        // ws: true, // 是否启用websockets
+        // ws: true, // 是否启用web sockets
         // secure: false, // 使用的是http协议则设置为false，https协议则设置为true
         changeOrigin: true,
         pathRewrite: {
-          // '^/api2': ''
-          '/api/private/v1/api2': '/api/private/v1/'
+          // '^/api2/': ''
+          '/api/private/v1/api2/': '/api/private/v1/'
+        }
+      },
+      '/api3': {
+        target: 'http://127.0.0.1:8088',
+        changeOrigin: true,
+        pathRewrite: {
+          '^/api3': ''
         }
       }
     }
