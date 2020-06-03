@@ -41,7 +41,7 @@
             <el-button type="danger" icon="el-icon-delete" size="mini" @click="deleteUser(scope.row.id)"></el-button>
             <!-- 分配角色按钮 -->
             <el-tooltip class="item" effect="dark" content="分配角色" placement="top" :enterable="false">
-              <el-button type="warning" icon="el-icon-setting" size="mini" @click="bindRole(scope.row.username)"></el-button>
+              <el-button type="warning" icon="el-icon-setting" size="mini" @click="bindRoleDiaLog(scope.row)"></el-button>
             </el-tooltip>
           </template>
         </el-table-column>
@@ -93,6 +93,27 @@
       <span slot="footer" class="dialog-footer">
         <el-button @click="editDialogVisible = false">取 消</el-button>
         <el-button type="primary" @click="editUserInfo">确 定</el-button>
+      </span>
+    </el-dialog>
+
+    <!-- 分配角色的对话框 -->
+    <el-dialog title="分配角色" :visible.sync="bindRoleDialogVisible" width="50%" @close="bindRoleDialogClosed">
+      <el-form :model="bindRoleForm">
+        <el-form-item label="用户名称" label-width="80px">
+          <el-input v-model="bindRoleForm.userInfo.username" disabled=""></el-input>
+        </el-form-item>
+        <el-form-item label="当前角色" label-width="80px">
+          <el-input v-model="bindRoleForm.userInfo.role_name" disabled=""></el-input>
+        </el-form-item>
+        <el-form-item label="绑定角色" label-width="80px">
+          <el-select v-model="bindRoleForm.bindRoleId" placeholder="请选择绑定角色">
+            <el-option v-for="item in roleList" :key="item.id" :label="item.roleName" :value="item.id"></el-option>
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="bindRoleDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="bindRole">确 定</el-button>
       </span>
     </el-dialog>
   </div>
@@ -171,6 +192,19 @@ export default {
           { required: true, message: '请输入手机号', trigger: 'blur' },
           { validator: checkMobile, trigger: 'blur' }
         ]
+      },
+      // 控制分配角色对话框的显示与隐藏
+      bindRoleDialogVisible: false,
+      // 需要被分配角色的用户信息
+      userInfo: {},
+      // 所有角色的数据列表
+      roleList: [],
+      // 分配角色对话框中，下拉选中的角色ID
+      selectedRoleId: '',
+      // 绑定角色表单绑定的数据
+      bindRoleForm: {
+        userInfo: {},
+        bindRoleId: ''
       }
     }
   },
@@ -205,9 +239,30 @@ export default {
       this.getUserList()
     },
 
-    // 用户绑定角色
-    bindRole(username) {
-      this.$message.success(username)
+    // 展示用户绑定角色的对话框
+    async bindRoleDiaLog(userInfo) {
+      // 保存要分配角色的用户信息
+      this.bindRoleForm.userInfo = userInfo
+      // 显示对话框之前，先获取所有角色的数据
+      const { data: res } = await this.$axios.get('/api2/roles')
+      if (res.meta.status !== 200) return this.$message.error('获取角色列表失败')
+      this.roleList = res.data
+      this.bindRoleDialogVisible = true
+    },
+    // 点击确定,给用户绑定角色
+    async bindRole() {
+      this.$message.closeAll()
+      if (!this.bindRoleForm.bindRoleId) return this.$message.error('请选择要绑定的角色')
+      const { data: res } = await this.$axios.put(`/api2/users/${this.bindRoleForm.userInfo.id}/role`, { rid: this.bindRoleForm.bindRoleId })
+      if (res.meta.status !== 200) return this.$message.error('绑定角色失败')
+      this.getUserList()
+      this.bindRoleDialogVisible = false
+      this.$message.success('绑定角色成功')
+    },
+    // 监听分配角色对话框的关闭事件
+    bindRoleDialogClosed() {
+      this.bindRoleForm.bindRoleId = ''
+      this.bindRoleForm.userInfo = {}
     },
 
     // 监听 pagesize 改变的事件
